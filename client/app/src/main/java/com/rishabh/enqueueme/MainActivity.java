@@ -191,8 +191,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         beaconManager.getBeaconParsers().add(new BeaconParser().
                 setBeaconLayout(BeaconParser.EDDYSTONE_UID_LAYOUT));
         new BackgroundPowerSaver(this);
-        //beaconManager.bind(this);
-
     }
 
     @Override
@@ -201,58 +199,93 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 Log.i(TAG,"No of beacons are "+beacons.size());
-                if(pulsator!=null&&pulsator.isStarted()) {
-                    pulsator.stop();
-                    pulsator = null;
-                }
-
-                Log.i(TAG,"No of beacons are "+beacons.size());
-                if(flag==1 && beacons.size()>0) {
-                    beaconList = new ArrayList<Beacon>(beacons);
-                    flag = 0;
-                    Log.d(TAG, "size is " + beaconList.size());
+//<<<<<<< HEAD
+//                if(pulsator!=null&&pulsator.isStarted()) {
+//                    pulsator.stop();
+//                    pulsator = null;
+//                }
+//
+//                Log.i(TAG,"No of beacons are "+beacons.size());
+//                if(flag==1 && beacons.size()>0) {
+//                    beaconList = new ArrayList<Beacon>(beacons);
+//                    flag = 0;
+//                    Log.d(TAG, "size is " + beaconList.size());
+//                    beaconManager.unbind(MainActivity.this);
+//                }
+////                ArrayList<BeaconItem> beaconItems=new ArrayList<>();
+//
+//
+//
+////                for (Beacon beacon: beacons) {
+////
+////                    if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
+////                        // This is a Eddystone-UID frame
+////                        Identifier namespaceId = beacon.getId1();
+////                        Identifier instanceId = beacon.getId2();
+//////                        BeaconItem beaconItem= new BeaconItem(namespaceId.toString(),instanceId.toString());
+//////                        beaconItems.add(beaconItem);
+////                        Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
+////                                " and instance id: "+instanceId+
+////                                " approximately "+beacon.getDistance()+" meters away.");
+////
+////                        // Do we have telemetry data?
+////                        if (beacon.getExtraDataFields().size() > 0) {
+////                            long telemetryVersion = beacon.getExtraDataFields().get(0);
+////                            long batteryMilliVolts = beacon.getExtraDataFields().get(1);
+////                            long pduCount = beacon.getExtraDataFields().get(3);
+////                            long uptime = beacon.getExtraDataFields().get(4);
+////
+////                            Log.d(TAG, "The above beacon is sending telemetry version "+telemetryVersion+
+////                                    ", has been up for : "+uptime+" seconds"+
+////                                    ", has a battery level of "+batteryMilliVolts+" mV"+
+////                                    ", and has transmitted "+pduCount+" advertisements.");
+////
+////                        }
+////                    }
+////                }
+//=======
+                if(flag==1 && beacons.size()>0){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pulsator.stop();
+                            pulsator.setVisibility(View.GONE);
+                        }
+                    });
+                    beaconList=new ArrayList<Beacon>(beacons);
+                    flag=0;
+                    Log.d(TAG,"size is "+beaconList.size());
+                    beaconManager.removeAllRangeNotifiers();
+                    beaconManager.removeAllMonitorNotifiers();
                     beaconManager.unbind(MainActivity.this);
                 }
-//                ArrayList<BeaconItem> beaconItems=new ArrayList<>();
+                for (Beacon beacon: beacons) {
 
+                    if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
+                        // This is a Eddystone-UID frame
+                        Identifier namespaceId = beacon.getId1();
+                        Identifier instanceId = beacon.getId2();
 
+                        Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
+                                " and instance id: "+instanceId+
+                                " approximately "+beacon.getDistance()+" meters away.");
 
-//                for (Beacon beacon: beacons) {
-//
-//                    if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
-//                        // This is a Eddystone-UID frame
-//                        Identifier namespaceId = beacon.getId1();
-//                        Identifier instanceId = beacon.getId2();
-////                        BeaconItem beaconItem= new BeaconItem(namespaceId.toString(),instanceId.toString());
-////                        beaconItems.add(beaconItem);
-//                        Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
-//                                " and instance id: "+instanceId+
-//                                " approximately "+beacon.getDistance()+" meters away.");
-//
-//                        // Do we have telemetry data?
-//                        if (beacon.getExtraDataFields().size() > 0) {
-//                            long telemetryVersion = beacon.getExtraDataFields().get(0);
-//                            long batteryMilliVolts = beacon.getExtraDataFields().get(1);
-//                            long pduCount = beacon.getExtraDataFields().get(3);
-//                            long uptime = beacon.getExtraDataFields().get(4);
-//
-//                            Log.d(TAG, "The above beacon is sending telemetry version "+telemetryVersion+
-//                                    ", has been up for : "+uptime+" seconds"+
-//                                    ", has a battery level of "+batteryMilliVolts+" mV"+
-//                                    ", and has transmitted "+pduCount+" advertisements.");
-//
-//                        }
-//                    }
-//                }
+                        // Do we have telemetry data?
+                        if (beacon.getExtraDataFields().size() > 0) {
+                            long telemetryVersion = beacon.getExtraDataFields().get(0);
+                            long batteryMilliVolts = beacon.getExtraDataFields().get(1);
+                            long pduCount = beacon.getExtraDataFields().get(3);
+                            long uptime = beacon.getExtraDataFields().get(4);
 
-                if(beacons.size()>0)
-                {
-                    FragmentManager fm = getFragmentManager();
-                    SearchQueue newFragment = new SearchQueue();
-//                    Bundle b=new Bundle();
-//                    b.putParcelableArrayList("comments",commentItems);
-//                    newFragment.setArguments(b);
-                    newFragment.show(fm,"Beacons");
+                            Log.d(TAG, "The above beacon is sending telemetry version "+telemetryVersion+
+                                    ", has been up for : "+uptime+" seconds"+
+                                    ", has a battery level of "+batteryMilliVolts+" mV"+
+                                    ", and has transmitted "+pduCount+" advertisements.");
+
+                        }
+//>>>>>>> 23904c63eb9c79a5d7749059e7442fe39aa87343
+
+                    }
                 }
             }
         });
@@ -357,12 +390,12 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 
         pulsator = (PulsatorLayout) findViewById(R.id.pulsator);
 
-        pulsator.start();
-
         if(!beaconManager.isBound(this)){
             beaconManager.bind(this);
+            flag=1;
+            pulsator.setVisibility(View.VISIBLE);
+            pulsator.start();
         }
-
 
     }
 
@@ -489,4 +522,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         }
     }
 
+    public static void leaveQueue(String instanceId){
+
+    }
 }
