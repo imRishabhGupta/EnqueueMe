@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
     public CopyOnWriteArrayList<Region> regionList;
     public HashMap<String,Region> ssnRegionMap;
     private ArrayList<Beacon> beaconList;
-    int flag=1;
+    private int flag=1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,8 +149,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         beaconManager.getBeaconParsers().add(new BeaconParser().
                 setBeaconLayout(BeaconParser.EDDYSTONE_UID_LAYOUT));
         new BackgroundPowerSaver(this);
-        //beaconManager.bind(this);
-        beaconList=new ArrayList<>();
     }
 
     @Override
@@ -160,9 +158,18 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 Log.i(TAG,"No of beacons are "+beacons.size());
                 if(flag==1 && beacons.size()>0){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pulsator.stop();
+                            pulsator.setVisibility(View.GONE);
+                        }
+                    });
                     beaconList=new ArrayList<Beacon>(beacons);
                     flag=0;
                     Log.d(TAG,"size is "+beaconList.size());
+                    beaconManager.removeAllRangeNotifiers();
+                    beaconManager.removeAllMonitorNotifiers();
                     beaconManager.unbind(MainActivity.this);
                 }
                 for (Beacon beacon: beacons) {
@@ -292,12 +299,13 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 
         pulsator = (PulsatorLayout) findViewById(R.id.pulsator);
 
-        pulsator.start();
-
         if(!beaconManager.isBound(this)){
             beaconManager.bind(this);
             flag=1;
+            pulsator.setVisibility(View.VISIBLE);
+            pulsator.start();
         }
+
     }
 
     @Override
@@ -423,4 +431,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         }
     }
 
+    public static void leaveQueue(String instanceId){
+
+    }
 }

@@ -53,7 +53,7 @@ public class QueueAdapter extends RecyclerView.Adapter<QueueAdapter.MyViewHolder
     @Override
     public void onBindViewHolder(final MyViewHolder holder, final int listPosition) {
 
-        TextView queueName = holder.queueName;
+        final TextView queueName = holder.queueName;
         TextView yourQueueNumber = holder.yourQueueNumber;
         TextView currentNumber = holder.currentNumber;
         Button leaveQueue = holder.leaveQueue;
@@ -65,6 +65,7 @@ public class QueueAdapter extends RecyclerView.Adapter<QueueAdapter.MyViewHolder
             @Override
             public void onClick(View v) {
                 Log.d("here ","clicked item");
+                MainActivity.leaveQueue(queueName.getText().toString());
             }
         });
     }
