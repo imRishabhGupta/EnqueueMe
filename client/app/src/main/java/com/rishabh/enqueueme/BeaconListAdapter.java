@@ -10,12 +10,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import org.altbeacon.beacon.Beacon;
+
 import java.util.ArrayList;
 
 
 public class BeaconListAdapter extends RecyclerView.Adapter<BeaconListAdapter.MyViewHolder> {
 
-    private ArrayList<BeaconItem> beaconItems;
+    private ArrayList<Beacon> beaconItems;
 
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
@@ -34,7 +36,7 @@ public class BeaconListAdapter extends RecyclerView.Adapter<BeaconListAdapter.My
     }
 
 
-    public BeaconListAdapter(ArrayList<BeaconItem> beaconItems) {
+    public BeaconListAdapter(ArrayList<Beacon> beaconItems) {
         this.beaconItems=beaconItems;
     }
 
@@ -50,19 +52,19 @@ public class BeaconListAdapter extends RecyclerView.Adapter<BeaconListAdapter.My
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
 
-        final BeaconItem beaconItem = beaconItems.get(position);
+        final Beacon beaconItem = beaconItems.get(position);
 
 
-        if (!TextUtils.isEmpty(beaconItem.getNamespaceId())) {
-            holder.comment.setText(beaconItem.getNamespaceId());
+        if (!TextUtils.isEmpty(beaconItem.getId1().toString())) {
+            holder.comment.setText(beaconItem.getId1().toString());
             holder.comment.setVisibility(View.VISIBLE);
         } else {
             // status is empty, remove from view
             holder.comment.setVisibility(View.GONE);
         }
 
-        if (!TextUtils.isEmpty(beaconItem.getInstanceId())) {
-            holder.from.setText(beaconItem.getInstanceId());
+        if (!TextUtils.isEmpty(beaconItem.getId2().toString())) {
+            holder.from.setText(beaconItem.getId2().toString());
             holder.from.setVisibility(View.VISIBLE);
         } else {
             // status is empty, remove from view

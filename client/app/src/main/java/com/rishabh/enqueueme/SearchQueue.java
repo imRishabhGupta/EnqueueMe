@@ -12,6 +12,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.altbeacon.beacon.Beacon;
+
 import java.util.ArrayList;
 
 /**
@@ -19,7 +21,7 @@ import java.util.ArrayList;
  */
 public class SearchQueue extends DialogFragment {
     private RecyclerView mRecyclerView;
-    private ArrayList<BeaconItem> beaconItems;
+    private ArrayList<Beacon> beaconItems;
     // this method create view for your Dialog
 
     public SearchQueue(){}

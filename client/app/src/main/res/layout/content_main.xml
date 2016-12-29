@@ -11,7 +11,7 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:clipToPadding="false"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.rishabh.enqueueme.MainActivity"
+    tools:context="com.rishabh.queuer.MainActivity"
     tools:showIn="@layout/activity_main">
 
     <Button

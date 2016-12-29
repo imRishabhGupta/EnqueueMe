@@ -17,6 +17,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -25,6 +26,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,6 +57,7 @@ import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -80,19 +83,37 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
     private RecyclerView.LayoutManager mLayoutManager;
     private ArrayList<Queue> myDataset;
     private PulsatorLayout pulsator;
+    private int flag=1;
+    private ArrayList<Beacon> beaconList;
     private static final Identifier nameSpaceId = Identifier.parse("0x5dc33487f02e477d4058");
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     private static String[] mPermissions = { Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH};
     public CopyOnWriteArrayList<String> regionNameList;
     public CopyOnWriteArrayList<Region> regionList;
     public HashMap<String,Region> ssnRegionMap;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+//        progressBar = (ProgressBar) findViewById(R.id.progressBardce);
+//        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
+//        progressBar.setVisibility(View.VISIBLE);
         setSupportActionBar(toolbar);
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://35.164.180.109:1236/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        // prepare call in Retrofit 2.0
+        QueueApi stackOverflowAPI = retrofit.create(QueueApi.class);
+
+        Call<Queues> call = stackOverflowAPI.getQueues(Utils.getUserId(this));
+        //asynchronous call
+        call.enqueue(this);
 
         mMessageListener = new MessageListener() {
             @Override
@@ -111,6 +132,29 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
                 Log.d(TAG, "Lost sight of message: " + messageAsString);
             }
         };
+
+//        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+//                //Refreshing data on server
+//
+//                progressBar.setVisibility(View.GONE);
+//
+//                Retrofit retrofit = new Retrofit.Builder()
+//                        .baseUrl("http://35.164.180.109:1236/")
+//                        .addConverterFactory(GsonConverterFactory.create())
+//                        .build();
+//
+//                // prepare call in Retrofit 2.0
+//                QueueApi stackOverflowAPI = retrofit.create(QueueApi.class);
+//
+//                Call<Queues> call = stackOverflowAPI.getQueues(Utils.getUserId(MainActivity.this));
+//                //asynchronous call
+//                call.enqueue(MainActivity.this);
+//
+//
+//            }
+//        });
         mRecyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
@@ -157,40 +201,49 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 Log.i(TAG,"No of beacons are "+beacons.size());
-                if(pulsator!=null&&pulsator.isStarted()){
+                if(pulsator!=null&&pulsator.isStarted()) {
                     pulsator.stop();
-                    pulsator=null;
+                    pulsator = null;
                 }
 
-                ArrayList<BeaconItem> beaconItems=new ArrayList<>();
-
-                for (Beacon beacon: beacons) {
-
-                    if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
-                        // This is a Eddystone-UID frame
-                        Identifier namespaceId = beacon.getId1();
-                        Identifier instanceId = beacon.getId2();
-                        BeaconItem beaconItem= new BeaconItem(namespaceId.toString(),instanceId.toString());
-                        beaconItems.add(beaconItem);
-                        Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
-                                " and instance id: "+instanceId+
-                                " approximately "+beacon.getDistance()+" meters away.");
-
-                        // Do we have telemetry data?
-                        if (beacon.getExtraDataFields().size() > 0) {
-                            long telemetryVersion = beacon.getExtraDataFields().get(0);
-                            long batteryMilliVolts = beacon.getExtraDataFields().get(1);
-                            long pduCount = beacon.getExtraDataFields().get(3);
-                            long uptime = beacon.getExtraDataFields().get(4);
-
-                            Log.d(TAG, "The above beacon is sending telemetry version "+telemetryVersion+
-                                    ", has been up for : "+uptime+" seconds"+
-                                    ", has a battery level of "+batteryMilliVolts+" mV"+
-                                    ", and has transmitted "+pduCount+" advertisements.");
-
-                        }
-                    }
+                Log.i(TAG,"No of beacons are "+beacons.size());
+                if(flag==1 && beacons.size()>0) {
+                    beaconList = new ArrayList<Beacon>(beacons);
+                    flag = 0;
+                    Log.d(TAG, "size is " + beaconList.size());
+                    beaconManager.unbind(MainActivity.this);
                 }
+//                ArrayList<BeaconItem> beaconItems=new ArrayList<>();
+
+
+
+//                for (Beacon beacon: beacons) {
+//
+//                    if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
+//                        // This is a Eddystone-UID frame
+//                        Identifier namespaceId = beacon.getId1();
+//                        Identifier instanceId = beacon.getId2();
+////                        BeaconItem beaconItem= new BeaconItem(namespaceId.toString(),instanceId.toString());
+////                        beaconItems.add(beaconItem);
+//                        Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
+//                                " and instance id: "+instanceId+
+//                                " approximately "+beacon.getDistance()+" meters away.");
+//
+//                        // Do we have telemetry data?
+//                        if (beacon.getExtraDataFields().size() > 0) {
+//                            long telemetryVersion = beacon.getExtraDataFields().get(0);
+//                            long batteryMilliVolts = beacon.getExtraDataFields().get(1);
+//                            long pduCount = beacon.getExtraDataFields().get(3);
+//                            long uptime = beacon.getExtraDataFields().get(4);
+//
+//                            Log.d(TAG, "The above beacon is sending telemetry version "+telemetryVersion+
+//                                    ", has been up for : "+uptime+" seconds"+
+//                                    ", has a battery level of "+batteryMilliVolts+" mV"+
+//                                    ", and has transmitted "+pduCount+" advertisements.");
+//
+//                        }
+//                    }
+//                }
 
                 if(beacons.size()>0)
                 {
@@ -240,8 +293,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         @Override
         public void onResponse(Response<Queues> response, Retrofit retrofit) {
             setProgressBarIndeterminateVisibility(false);
-//        myDataset.clear();
-//        myDataset.addAll(response.body().items);
+            myDataset.clear();
+            myDataset.addAll(response.body().items);
+//            progressBar.setVisibility(View.GONE);
             Log.d("response",String.valueOf(response));
             Log.d("userid",String.valueOf(Utils.getUserId(this)));
             mAdapter.notifyDataSetChanged();
@@ -249,8 +303,10 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 
         @Override
         public void onFailure(Throwable t) {
+//            progressBar.setVisibility(View.GONE);
             Toast.makeText(MainActivity.this, t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             Log.d("error",t.getLocalizedMessage());
+
     }
 
     private static class MyOnClickListener implements View.OnClickListener {
