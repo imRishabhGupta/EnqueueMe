@@ -86,6 +86,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
     public CopyOnWriteArrayList<String> regionNameList;
     public CopyOnWriteArrayList<Region> regionList;
     public HashMap<String,Region> ssnRegionMap;
+    private ArrayList<Beacon> beaconList;
+    int flag=1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
                 setBeaconLayout(BeaconParser.EDDYSTONE_UID_LAYOUT));
         new BackgroundPowerSaver(this);
         //beaconManager.bind(this);
-
+        beaconList=new ArrayList<>();
     }
 
     @Override
@@ -157,21 +159,19 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 Log.i(TAG,"No of beacons are "+beacons.size());
-                if(pulsator!=null&&pulsator.isStarted()){
-                    pulsator.stop();
-                    pulsator=null;
+                if(flag==1 && beacons.size()>0){
+                    beaconList=new ArrayList<Beacon>(beacons);
+                    flag=0;
+                    Log.d(TAG,"size is "+beaconList.size());
+                    beaconManager.unbind(MainActivity.this);
                 }
-
-                ArrayList<BeaconItem> beaconItems=new ArrayList<>();
-
                 for (Beacon beacon: beacons) {
 
                     if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
                         // This is a Eddystone-UID frame
                         Identifier namespaceId = beacon.getId1();
                         Identifier instanceId = beacon.getId2();
-                        BeaconItem beaconItem= new BeaconItem(namespaceId.toString(),instanceId.toString());
-                        beaconItems.add(beaconItem);
+
                         Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
                                 " and instance id: "+instanceId+
                                 " approximately "+beacon.getDistance()+" meters away.");
@@ -189,17 +189,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
                                     ", and has transmitted "+pduCount+" advertisements.");
 
                         }
-                    }
-                }
 
-                if(beacons.size()>0)
-                {
-                    FragmentManager fm = getFragmentManager();
-                    SearchQueue newFragment = new SearchQueue();
-//                    Bundle b=new Bundle();
-//                    b.putParcelableArrayList("comments",commentItems);
-//                    newFragment.setArguments(b);
-                    newFragment.show(fm,"Beacons");
+                    }
                 }
             }
         });
@@ -305,9 +296,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 
         if(!beaconManager.isBound(this)){
             beaconManager.bind(this);
+            flag=1;
         }
-
-
     }
 
     @Override
