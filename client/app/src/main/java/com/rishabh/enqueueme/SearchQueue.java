@@ -30,7 +30,7 @@ public class SearchQueue extends DialogFragment {
         View v = inflater.inflate(R.layout.queue_dialog, container, false);
         getDialog().getWindow().getAttributes().alpha = 0.8f;
 //        beaconItems=this.getArguments().getParcelableArrayList("comments");
-        Log.d("comments size",String.valueOf(beaconItems.size()));
+//        Log.d("comments size",String.valueOf(beaconItems.size()));
         mRecyclerView = (RecyclerView)v.findViewById(R.id.recycler_view_comment);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         BeaconListAdapter adapter = new BeaconListAdapter(beaconItems);

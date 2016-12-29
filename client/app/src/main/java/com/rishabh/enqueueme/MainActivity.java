@@ -2,6 +2,7 @@ package com.rishabh.enqueueme;
 
 import android.Manifest;
 import android.app.Application;
+import android.app.FragmentManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
@@ -93,16 +94,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(pulsator!=null&&pulsator.isStarted()){
-                    pulsator.stop();
-                    pulsator=null;
-                }
-            }
-        });
         mMessageListener = new MessageListener() {
             @Override
             public void onFound(Message message) {
@@ -166,12 +157,21 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 Log.i(TAG,"No of beacons are "+beacons.size());
+                if(pulsator!=null&&pulsator.isStarted()){
+                    pulsator.stop();
+                    pulsator=null;
+                }
+
+                ArrayList<BeaconItem> beaconItems=new ArrayList<>();
+
                 for (Beacon beacon: beacons) {
 
                     if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
                         // This is a Eddystone-UID frame
                         Identifier namespaceId = beacon.getId1();
                         Identifier instanceId = beacon.getId2();
+                        BeaconItem beaconItem= new BeaconItem(namespaceId.toString(),instanceId.toString());
+                        beaconItems.add(beaconItem);
                         Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
                                 " and instance id: "+instanceId+
                                 " approximately "+beacon.getDistance()+" meters away.");
@@ -190,6 +190,16 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 
                         }
                     }
+                }
+
+                if(beacons.size()>0)
+                {
+                    FragmentManager fm = getFragmentManager();
+                    SearchQueue newFragment = new SearchQueue();
+//                    Bundle b=new Bundle();
+//                    b.putParcelableArrayList("comments",commentItems);
+//                    newFragment.setArguments(b);
+                    newFragment.show(fm,"Beacons");
                 }
             }
         });
@@ -296,6 +306,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         if(!beaconManager.isBound(this)){
             beaconManager.bind(this);
         }
+
+
     }
 
     @Override
