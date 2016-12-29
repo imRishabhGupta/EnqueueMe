@@ -1,13 +1,18 @@
 package com.rishabh.enqueueme;
 
+import android.Manifest;
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -25,6 +30,8 @@ import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.messages.Message;
 import com.google.android.gms.nearby.messages.MessageFilter;
 import com.google.android.gms.nearby.messages.MessageListener;
+import com.google.android.gms.nearby.messages.MessagesOptions;
+import com.google.android.gms.nearby.messages.NearbyPermissions;
 import com.google.android.gms.nearby.messages.Strategy;
 import com.google.android.gms.nearby.messages.SubscribeOptions;
 import com.rishabh.enqueueme.R;
@@ -35,16 +42,31 @@ import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconConsumer;
+import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.Identifier;
+import org.altbeacon.beacon.MonitorNotifier;
+import org.altbeacon.beacon.RangeNotifier;
+import org.altbeacon.beacon.Region;
+import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
+
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import pl.bclogic.pulsator4droid.library.PulsatorLayout;
 
 import static android.R.attr.data;
 
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,Callback<Queues> {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,Callback<Queues>, BeaconConsumer {
+
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private BeaconManager beaconManager;
     private GoogleApiClient mGoogleApiClient;
     private static final int REQUEST_RESOLVE_ERROR = 1001;
     private Message mActiveMessage;
@@ -55,6 +77,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private RecyclerView.LayoutManager mLayoutManager;
     private ArrayList<Queue> myDataset;
     private PulsatorLayout pulsator;
+    private static final Identifier nameSpaceId = Identifier.parse("0x5dc33487f02e477d4058");
+
+    public CopyOnWriteArrayList<String> regionNameList;
+    public CopyOnWriteArrayList<Region> regionList;
+    public HashMap<String,Region> ssnRegionMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             public void onClick(View view) {
                 if(pulsator!=null&&pulsator.isStarted()){
                     pulsator.stop();
+                    unpublish();
                     pulsator=null;
                 }
             }
@@ -80,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 Log.i(TAG, "Message string: " + new String(message.getContent()));
                 Log.i(TAG, "Message namespaced type: " + message.getNamespace() +
                         "/" + message.getType());
+                Toast.makeText(MainActivity.this, ""+new String(message.getContent()), Toast.LENGTH_SHORT).show();
                 //Create a dialog to let user connect to that beacon or join the queue
             }
 
@@ -99,8 +128,80 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mAdapter = new QueueAdapter(myDataset);
         mRecyclerView.setAdapter(mAdapter);
         myOnClickListener = new MyOnClickListener(this);
+//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+//                == PackageManager.PERMISSION_GRANTED) {
+//            mGoogleApiClient = new GoogleApiClient.Builder(this)
+//                    .addApi(Nearby.MESSAGES_API, new MessagesOptions.Builder()
+//                            .setPermissions(NearbyPermissions.BLE)
+//                            .build())
+//                    .addConnectionCallbacks(this)
+//                    .enableAutoManage(this, this)
+//                    .build();
+//        }
+        ssnRegionMap = new HashMap<>();
+        regionList = new CopyOnWriteArrayList<>();
+        regionNameList = new CopyOnWriteArrayList<>();
+
+        ssnRegionMap.put("0x0117c59825E9",new Region("Test Room",nameSpaceId, Identifier.parse("0x0117c59825E9"),null));
+        ssnRegionMap.put("0x0117c55be3a8",new Region("Git Room",nameSpaceId,Identifier.parse("0x0117c55be3a8"),null));
+        ssnRegionMap.put("0x0117c552c493",new Region("Android Room",nameSpaceId,Identifier.parse("0x0117c552c493"),null));
+        ssnRegionMap.put("0x0117c55fc452",new Region("iOS Room",nameSpaceId,Identifier.parse("0x0117c55fc452"),null));
+        ssnRegionMap.put("0x0117c555c65f",new Region("Python Room",nameSpaceId,Identifier.parse("0x0117c555c65f"),null));
+        ssnRegionMap.put("0x0117c55d6660",new Region("Office",nameSpaceId,Identifier.parse("0x0117c55d6660"),null));
+        ssnRegionMap.put("0x0117c55ec086",new Region("Ruby Room",nameSpaceId,Identifier.parse("0x0117c55ec086"),null));
+
+        beaconManager = BeaconManager.getInstanceForApplication(getApplicationContext());
+        beaconManager.getBeaconParsers().add(new BeaconParser().
+                setBeaconLayout(BeaconParser.EDDYSTONE_UID_LAYOUT));
+        new BackgroundPowerSaver(this);
+        beaconManager.bind(this);
 
     }
+
+    @Override
+    public void onBeaconServiceConnect() {
+        beaconManager.addRangeNotifier(new RangeNotifier() {
+            @Override
+            public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+                if (beacons.size() > 0) {
+                    Log.i(TAG,"no of beacons i see are "+beacons.size());
+                    Log.i(TAG, "The first beacon I see is about "+beacons.iterator().next().getDistance()+" meters away.");
+                    Log.i(TAG,region.getUniqueId());
+
+                }
+            }
+        });
+
+        try {
+            beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
+        } catch (RemoteException e) {    }
+        beaconManager.addMonitorNotifier(new MonitorNotifier() {
+            @Override
+            public void didEnterRegion(Region region) {
+                Log.i(TAG, "I just saw an beacon for the first time!");
+            }
+
+            @Override
+            public void didExitRegion(Region region) {
+                Log.i(TAG, "I no longer see an beacon");
+            }
+
+            @Override
+            public void didDetermineStateForRegion(int state, Region region) {
+                Log.i(TAG, "I have just switched from seeing/not seeing beacons: "+state);
+            }
+        });
+
+        try {
+            for(String key:ssnRegionMap.keySet()) {
+                Region region = ssnRegionMap.get(key);
+                beaconManager.startMonitoringBeaconsInRegion(region);
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static class MyOnClickListener implements View.OnClickListener {
 
         private final Context context;
@@ -117,15 +218,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     public void start(View view){
         pulsator = (PulsatorLayout) findViewById(R.id.pulsator);
-        Log.i(TAG,pulsator.getCount()+ " " + pulsator.getDuration());
         pulsator.start();
+        publish("hello");
 
-        //pulsator.stop();
-//        mGoogleApiClient = new GoogleApiClient.Builder(this)
-//                .addApi(Nearby.MESSAGES_API)
-//                .addConnectionCallbacks(this)
-//                .enableAutoManage(this, this)
-//                .build();
     }
 
     @Override
@@ -167,7 +262,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onStop() {
         super.onStop();
-//        unsubscribe();
+       // unsubscribe();
 //        unpublish();
     }
 
@@ -203,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         SubscribeOptions options = new SubscribeOptions.Builder()
                 .setStrategy(Strategy.BLE_ONLY)
                 .build();
-        Nearby.Messages.subscribe(mGoogleApiClient, mMessageListener, options);
+        Nearby.Messages.subscribe(mGoogleApiClient, mMessageListener,options);
     }
 
     private void unsubscribe() {
@@ -230,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void onConnected(@Nullable Bundle bundle) {
         Toast.makeText(getApplicationContext(), "Connected to nearby", Toast.LENGTH_SHORT).show();
 //        publish("Hello");
-//        subscribe();
+        subscribe();
     }
 
     @Override
