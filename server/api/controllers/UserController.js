@@ -20,7 +20,7 @@ module.exports = {
 							becon : val2.id
 						}
 						QueNumber.create(final).exec(function(err,val2){
-							ok({success :true});
+							res.ok({success :true});
 						});
 					}
 				});
