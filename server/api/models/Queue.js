@@ -6,16 +6,22 @@
  */
 
 module.exports = {
-	schema: true,
 	attributes: {
 		beconId : {
 			type : "STRING",
 			required: true
 		},
-		devId :{
+		devId : {
+			type : "STRING",
+			required: true
+		},
+		userId :{
 	      model:'user'
 	    },
-		cQueue : "STRING"
+	   	number:{
+	      collection : "quenumber",
+	      via : "becon"
+	    }
 	}
 };
 

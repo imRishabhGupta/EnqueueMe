@@ -7,40 +7,59 @@
 
 module.exports = {
 	addQueue : function(req,res){
-		User.findOne({devId : req.body.devId}).exec(function(err,user){
-			console.log(user);
-			if(user!=undefined){
-				return res.ok(null);
+		User.findOne({devId : req.body.devId}).exec(function(err1,result){
+			if(result){
+				var data = {
+					beconId : req.body.beconId,
+					devId : req.body.devId,
+					userId : result.id
+				}
+				Queue.create(data).exec(function(err,val2){
+					if(val2){
+						var final = {
+							becon : val2.id
+						}
+						QueNumber.create(final).exec(function(err,val2){
+							ok({success :true});
+						});
+					}
+				});
 			}else{
-				User.create(req.body).exec(function(err,create){
-					if(res){
-						updateQueue(req.body);
+				User.create(req.body).exec(function(err2,create){
+					if(create){
+						var data = {
+							beconId : req.body.beconId,
+							devId : req.body.devId,
+							userId : create.id
+						}
+						Queue.create(data).exec(function(err,val2){
+							if(val2){
+								var final = {
+									becon : val2.id
+								}
+								QueNumber.create(final).exec(function(err,val2){
+									res.ok({success :true});
+								});
+							}
+						});
 					}
 				});
 			}
 		});
 	},
-	updateQueue : function(data){
-		Queue.findOne({deconId : data.deconId}).exec(function(err,val){
-			if(val!=undefined){
-				console.log("already exixt");
-			}else{
-				data['cQueue'] = '5';
-				Queue.create(data).exec(function(err,val){
-					console.log(val);
-				});
-			}
+	getQueue : function(req,res){
+		User.findOne({devId : req.params.id}).populate("queues").exec(function(err,user){
+			res.ok(user);
 		});
 	},
-	getQueue : function(req,res){
-		console.log(req.params);
-		User.find({devId : req.params.id}).exec(function(err,val){
-			if(val.length>0) res.ok(val);
+	getStatus : function(req,res){
+		Queue.find({id : req.params.id}).populate('number').exec(function(err,user){
+			res.ok(user);
 		});
 	},
 	removeQueue : function(req,res){
-		User.destroy({devId : req.body.devId,beconId : req.body.beconId}).exec(function(err,val){
-			if(val) res.ok(val);
+		Queue.destroy({beconId : req.params.id}).exec(function(err,val){
+			if(val) res.ok({success : true});
 		});
 	}
 };

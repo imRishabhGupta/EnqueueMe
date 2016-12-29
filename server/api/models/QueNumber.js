@@ -1,5 +1,5 @@
 /**
- * User.js
+ * QueNumber.js
  *
  * @description :: TODO: You might write a short summary of how this model works and what it represents here.
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
@@ -7,19 +7,11 @@
 
 module.exports = {
 
-	attributes: {
-		devId : {
-			type : "STRING",
-			required: true
-		},
-		beconId : {
-			type : "STRING",
-			required: true
-		},
-		queues:{
-	      collection : "queue",
-	      via : "userId"
-	    }
-	}
+  attributes: {
+  	becon : {
+  		model : "queue",
+  		current : "STRING"
+  	}
+  }
 };
 
