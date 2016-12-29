@@ -1,5 +1,6 @@
 package com.rishabh.enqueueme;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 public class QueueAdapter extends RecyclerView.Adapter<QueueAdapter.MyViewHolder> {
 
     private ArrayList<Queue> dataSet;
+    public Context context;
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
 
@@ -34,8 +36,9 @@ public class QueueAdapter extends RecyclerView.Adapter<QueueAdapter.MyViewHolder
         }
     }
 
-    public QueueAdapter(ArrayList<Queue> data) {
+    public QueueAdapter(ArrayList<Queue> data,Context context) {
         this.dataSet = data;
+        this.context=context;
     }
 
     @Override
@@ -58,14 +61,17 @@ public class QueueAdapter extends RecyclerView.Adapter<QueueAdapter.MyViewHolder
         TextView currentNumber = holder.currentNumber;
         Button leaveQueue = holder.leaveQueue;
 
-        queueName.setText(dataSet.get(listPosition).getQueueName());
-        yourQueueNumber.setText(dataSet.get(listPosition).getYourQueueNumber());
+        queueName.setText("Queue id - "+dataSet.get(listPosition).getQueueName());
+        yourQueueNumber.setText("My queue no - "+dataSet.get(listPosition).getYourQueueNumber());
         currentNumber.setText(dataSet.get(listPosition).getCurrentNumber());
         leaveQueue.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.d("here ","clicked item");
-                MainActivity.leaveQueue(queueName.getText().toString());
+                MainActivity.leaveQueue(queueName.getText().toString(),context);
+                dataSet.remove(listPosition);
+                notifyItemRemoved(listPosition);
+                notifyItemRangeChanged(listPosition,dataSet.size());
             }
         });
     }
