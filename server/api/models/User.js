@@ -20,7 +20,10 @@ module.exports = {
 			type : "STRING",
 			required: true
 		},
-		code : "STINRG"
+		queue :{
+	      collection : "queue",
+	      via : "devId"
+	    }
 	}
 };
 

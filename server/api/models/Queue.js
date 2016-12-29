@@ -12,6 +12,9 @@ module.exports = {
 			type : "STRING",
 			required: true
 		},
+		devId :{
+	      model:'user'
+	    },
 		cQueue : "STRING"
 	}
 };
