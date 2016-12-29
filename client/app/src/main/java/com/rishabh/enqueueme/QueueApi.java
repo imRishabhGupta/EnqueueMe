@@ -5,6 +5,7 @@ package com.rishabh.enqueueme;
  */
 import retrofit.Callback;
 import retrofit.http.GET;
+import retrofit.http.POST;
 import retrofit.http.Path;
 import retrofit.http.Query;
 import retrofit.Call;
@@ -13,4 +14,7 @@ import retrofit.http.Url;
 public interface QueueApi {
     @GET("user/getQueue/{userid}")
     Call<Queues> getQueues(@Path("userid") String userId);
+
+    
+
 }

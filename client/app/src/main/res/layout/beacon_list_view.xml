@@ -6,31 +6,48 @@
     android:background="#00000000"
     >
 
+    <!--<TextView-->
+        <!--android:id="@+id/from"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginLeft="15dp"-->
+        <!--android:layout_marginTop="5dp"-->
+        <!--android:layout_marginRight="15dp"-->
+        <!--android:drawablePadding="8dp"-->
+        <!--android:gravity="left|center"-->
+        <!--android:textColor="#222222"-->
+        <!--android:textStyle="bold"-->
+        <!--android:text="Commenter"-->
+        <!--android:textSize="14sp"-->
+        <!--/>-->
+
+    <!--<TextView-->
+        <!--android:id="@+id/comment"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginLeft="15dp"-->
+        <!--android:layout_marginRight="15dp"-->
+        <!--android:drawablePadding="8dp"-->
+        <!--android:textSize="14sp"-->
+        <!--android:textIsSelectable="true"-->
+        <!--/>-->
+
     <TextView
         android:id="@+id/from"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
-        android:layout_marginTop="5dp"
-        android:layout_marginRight="15dp"
-        android:drawablePadding="8dp"
-        android:gravity="left|center"
-        android:textColor="#222222"
-        android:textStyle="bold"
-        android:text="Commenter"
-        android:textSize="14sp"
-        />
-
+        android:layout_width="match_parent"
+        android:text="Queue Name - Bank"
+        android:textAlignment="center"
+        android:paddingLeft="8dp"
+        android:paddingTop="6dp"
+        android:layout_height="39dp" />
     <TextView
         android:id="@+id/comment"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
-        android:layout_marginRight="15dp"
-        android:drawablePadding="8dp"
-        android:textSize="14sp"
-        android:textIsSelectable="true"
-        />
+        android:textAlignment="center"
+        android:paddingLeft="8dp"
+        android:paddingTop="6dp"
+        android:text="Your Queue Number - 5"
+        android:layout_height="39dp" />
 
 
 </LinearLayout>

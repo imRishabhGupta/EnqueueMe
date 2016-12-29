@@ -91,8 +91,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
     public CopyOnWriteArrayList<String> regionNameList;
     public CopyOnWriteArrayList<Region> regionList;
     public HashMap<String,Region> ssnRegionMap;
-    private SwipeRefreshLayout mSwipeRefreshLayout;
-    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,28 +131,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
             }
         };
 
-//        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-//            @Override
-//            public void onRefresh() {
-//                //Refreshing data on server
-//
-//                progressBar.setVisibility(View.GONE);
-//
-//                Retrofit retrofit = new Retrofit.Builder()
-//                        .baseUrl("http://35.164.180.109:1236/")
-//                        .addConverterFactory(GsonConverterFactory.create())
-//                        .build();
-//
-//                // prepare call in Retrofit 2.0
-//                QueueApi stackOverflowAPI = retrofit.create(QueueApi.class);
-//
-//                Call<Queues> call = stackOverflowAPI.getQueues(Utils.getUserId(MainActivity.this));
-//                //asynchronous call
-//                call.enqueue(MainActivity.this);
-//
-//
-//            }
-//        });
         mRecyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
@@ -165,16 +141,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         mAdapter = new QueueAdapter(myDataset);
         mRecyclerView.setAdapter(mAdapter);
         myOnClickListener = new MyOnClickListener(this);
-//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-//                == PackageManager.PERMISSION_GRANTED) {
-//            mGoogleApiClient = new GoogleApiClient.Builder(this)
-//                    .addApi(Nearby.MESSAGES_API, new MessagesOptions.Builder()
-//                            .setPermissions(NearbyPermissions.BLE)
-//                            .build())
-//                    .addConnectionCallbacks(this)
-//                    .enableAutoManage(this, this)
-//                    .build();
-//        }
+
         ssnRegionMap = new HashMap<>();
         regionList = new CopyOnWriteArrayList<>();
         regionNameList = new CopyOnWriteArrayList<>();
@@ -199,51 +166,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 Log.i(TAG,"No of beacons are "+beacons.size());
-//<<<<<<< HEAD
-//                if(pulsator!=null&&pulsator.isStarted()) {
-//                    pulsator.stop();
-//                    pulsator = null;
-//                }
-//
-//                Log.i(TAG,"No of beacons are "+beacons.size());
-//                if(flag==1 && beacons.size()>0) {
-//                    beaconList = new ArrayList<Beacon>(beacons);
-//                    flag = 0;
-//                    Log.d(TAG, "size is " + beaconList.size());
-//                    beaconManager.unbind(MainActivity.this);
-//                }
-////                ArrayList<BeaconItem> beaconItems=new ArrayList<>();
-//
-//
-//
-////                for (Beacon beacon: beacons) {
-////
-////                    if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
-////                        // This is a Eddystone-UID frame
-////                        Identifier namespaceId = beacon.getId1();
-////                        Identifier instanceId = beacon.getId2();
-//////                        BeaconItem beaconItem= new BeaconItem(namespaceId.toString(),instanceId.toString());
-//////                        beaconItems.add(beaconItem);
-////                        Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
-////                                " and instance id: "+instanceId+
-////                                " approximately "+beacon.getDistance()+" meters away.");
-////
-////                        // Do we have telemetry data?
-////                        if (beacon.getExtraDataFields().size() > 0) {
-////                            long telemetryVersion = beacon.getExtraDataFields().get(0);
-////                            long batteryMilliVolts = beacon.getExtraDataFields().get(1);
-////                            long pduCount = beacon.getExtraDataFields().get(3);
-////                            long uptime = beacon.getExtraDataFields().get(4);
-////
-////                            Log.d(TAG, "The above beacon is sending telemetry version "+telemetryVersion+
-////                                    ", has been up for : "+uptime+" seconds"+
-////                                    ", has a battery level of "+batteryMilliVolts+" mV"+
-////                                    ", and has transmitted "+pduCount+" advertisements.");
-////
-////                        }
-////                    }
-////                }
-//=======
+
                 if(flag==1 && beacons.size()>0){
                     runOnUiThread(new Runnable() {
                         @Override
@@ -252,12 +175,18 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
                             pulsator.setVisibility(View.GONE);
                         }
                     });
-                    beaconList=new ArrayList<Beacon>(beacons);
+                    beaconList=new ArrayList<>(beacons);
                     flag=0;
                     Log.d(TAG,"size is "+beaconList.size());
                     beaconManager.removeAllRangeNotifiers();
                     beaconManager.removeAllMonitorNotifiers();
                     beaconManager.unbind(MainActivity.this);
+                    FragmentManager fm = getFragmentManager();
+                    SearchQueue newFragment = new SearchQueue(MainActivity.this);
+                    Bundle b=new Bundle();
+                    b.putParcelableArrayList("beacons",beaconList);
+                    newFragment.setArguments(b);
+                    newFragment.show(fm,"Comments");
                 }
                 for (Beacon beacon: beacons) {
 
