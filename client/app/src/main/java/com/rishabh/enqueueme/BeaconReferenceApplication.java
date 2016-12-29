@@ -11,6 +11,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
@@ -23,16 +24,15 @@ import org.altbeacon.beacon.startup.RegionBootstrap;
 public class BeaconReferenceApplication extends Application implements BootstrapNotifier {
     private static final String TAG = BeaconReferenceApplication.class.getSimpleName();
     private RegionBootstrap regionBootstrap;
+    private static final Identifier nameSpaceId = Identifier.parse("0x5dc33487f02e477d4058");
     @Override
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "App started up");
         BeaconManager beaconManager = BeaconManager.getInstanceForApplication(this);
-        // To detect proprietary beacons, you must add a line like below corresponding to your beacon
-        // type.  Do a web search for "setBeaconLayout" to get the proper expression.
-        // beaconManager.getBeaconParsers().add(new BeaconParser().
-        //        setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"));
-
+        beaconManager.getBeaconParsers().add(new BeaconParser().
+                setBeaconLayout(BeaconParser.EDDYSTONE_UID_LAYOUT));
+        new BackgroundPowerSaver(this);
         // wake up the app when any beacon is seen (you can specify specific id filers in the parameters below)
         //Region region =new Region("Python Room",nameSpaceId, Identifier.parse("0x0117c555c65f"),null);
         //regionBootstrap = new RegionBootstrap(this, region);
