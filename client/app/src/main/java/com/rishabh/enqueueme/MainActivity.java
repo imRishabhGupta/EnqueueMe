@@ -252,12 +252,12 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         }
     }
 
+
+
         @Override
         public void onResponse(Response<Queues> response, Retrofit retrofit) {
-            setProgressBarIndeterminateVisibility(false);
             myDataset.clear();
             myDataset.addAll(response.body().items);
-//            progressBar.setVisibility(View.GONE);
             Log.d("response",String.valueOf(response));
             Log.d("userid",String.valueOf(Utils.getUserId(this)));
             mAdapter.notifyDataSetChanged();
@@ -265,7 +265,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 
         @Override
         public void onFailure(Throwable t) {
-//            progressBar.setVisibility(View.GONE);
             Toast.makeText(MainActivity.this, t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             Log.d("error",t.getLocalizedMessage());
 
@@ -337,7 +336,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        setProgressBarIndeterminateVisibility(true);
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://35.164.180.109:1236/")
                 .addConverterFactory(GsonConverterFactory.create())

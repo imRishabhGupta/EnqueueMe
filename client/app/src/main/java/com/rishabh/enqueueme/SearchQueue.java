@@ -15,8 +15,16 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import org.altbeacon.beacon.Beacon;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.util.ArrayList;
+
+import retrofit.Callback;
+import retrofit.GsonConverterFactory;
+import retrofit.Response;
+import retrofit.Retrofit;
 
 /**
  * Created by rohanagarwal94 on 30/7/16.
@@ -43,7 +51,46 @@ public class SearchQueue extends DialogFragment {
         BeaconListAdapter adapter = new BeaconListAdapter(beaconItems, new BeaconListAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Beacon item) {
-                Toast.makeText(context,"ccwe",Toast.LENGTH_SHORT).show();
+//                Toast.makeText(context,"ccwe",Toast.LENGTH_SHORT).show();
+                Retrofit retrofit = new Retrofit.Builder()
+                        .baseUrl("http://35.164.180.109:1236/")
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build();
+                QueueApi stackOverflowAPI = retrofit.create(QueueApi.class);
+                stackOverflowAPI.insertUser(
+                        item.getId2().toString(), Utils.getUserId(context),
+                        new Callback<Response>() {
+                            @Override
+                            public void onResponse(Response<Response> response, Retrofit retrofit) {
+
+                                try {
+                                    JSONObject jsonObject= new JSONObject(response.toString());
+                                    Boolean success = jsonObject.getBoolean("success");
+                                    if(success)
+                                    {
+                                        Toast.makeText(context,"You are queued",Toast.LENGTH_SHORT).show();
+
+
+                                    }
+                                    else
+                                    {
+                                        Toast.makeText(context,"You were already in queue",Toast.LENGTH_SHORT).show();
+
+                                    }
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+
+                                Toast.makeText(context,"failed response",Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                );
+
             }
         });
         mRecyclerView.setAdapter(adapter);
