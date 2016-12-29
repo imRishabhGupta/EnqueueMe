@@ -1,10 +1,13 @@
 package com.rishabh.enqueueme;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -18,6 +21,7 @@ public class QueueAdapter extends RecyclerView.Adapter<QueueAdapter.MyViewHolder
     public static class MyViewHolder extends RecyclerView.ViewHolder {
 
         TextView queueName;
+        Button leaveQueue;
         TextView yourQueueNumber;
         TextView currentNumber;
 
@@ -26,6 +30,7 @@ public class QueueAdapter extends RecyclerView.Adapter<QueueAdapter.MyViewHolder
             this.queueName = (TextView) itemView.findViewById(R.id.name);
             this.yourQueueNumber = (TextView) itemView.findViewById(R.id.your_number);
             this.currentNumber = (TextView) itemView.findViewById(R.id.current_number);
+            this.leaveQueue = (Button) itemView.findViewById(R.id.leave);
         }
     }
 
@@ -51,10 +56,17 @@ public class QueueAdapter extends RecyclerView.Adapter<QueueAdapter.MyViewHolder
         TextView queueName = holder.queueName;
         TextView yourQueueNumber = holder.yourQueueNumber;
         TextView currentNumber = holder.currentNumber;
+        Button leaveQueue = holder.leaveQueue;
 
         queueName.setText(dataSet.get(listPosition).getQueueName());
         yourQueueNumber.setText(dataSet.get(listPosition).getYourQueueNumber());
         currentNumber.setText(dataSet.get(listPosition).getCurrentNumber());
+        leaveQueue.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("here ","clicked item");
+            }
+        });
     }
 
     @Override
