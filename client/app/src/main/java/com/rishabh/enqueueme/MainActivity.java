@@ -30,6 +30,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.VolleyError;
+import com.android.volley.Response;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.nearby.Nearby;
@@ -45,7 +50,6 @@ import com.rishabh.enqueueme.R;
 import retrofit.Call;
 import retrofit.Callback;
 import retrofit.GsonConverterFactory;
-import retrofit.Response;
 import retrofit.Retrofit;
 
 import org.altbeacon.beacon.Beacon;
@@ -57,19 +61,24 @@ import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 import pl.bclogic.pulsator4droid.library.PulsatorLayout;
 
 import static android.R.attr.data;
+import static android.R.attr.gestureColor;
 
 
-public class MainActivity extends AppCompatActivity implements BeaconConsumer, Callback<Queues> {
+public class MainActivity extends AppCompatActivity implements BeaconConsumer{//}, Callback<Queues> {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private BeaconManager beaconManager;
@@ -79,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
     private MessageListener mMessageListener;
     private RecyclerView mRecyclerView;
     static View.OnClickListener myOnClickListener;
-    private RecyclerView.Adapter mAdapter;
+    public RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private ArrayList<Queue> myDataset;
     private PulsatorLayout pulsator;
@@ -91,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
     public CopyOnWriteArrayList<String> regionNameList;
     public CopyOnWriteArrayList<Region> regionList;
     public HashMap<String,Region> ssnRegionMap;
+    public RequestQueue requestQueue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,17 +111,17 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 //        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
 //        progressBar.setVisibility(View.VISIBLE);
         setSupportActionBar(toolbar);
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://35.164.180.109:1236/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        // prepare call in Retrofit 2.0
-        QueueApi stackOverflowAPI = retrofit.create(QueueApi.class);
-
-        Call<Queues> call = stackOverflowAPI.getQueues(Utils.getUserId(this));
-        //asynchronous call
-        call.enqueue(this);
+//        Retrofit retrofit = new Retrofit.Builder()
+//                .baseUrl("http://35.164.180.109:1236/")
+//                .addConverterFactory(GsonConverterFactory.create())
+//                .build();
+//
+//        // prepare call in Retrofit 2.0
+//        QueueApi stackOverflowAPI = retrofit.create(QueueApi.class);
+//
+//        Call<Queues> call = stackOverflowAPI.getQueues(Utils.getUserId(this));
+//        //asynchronous call
+//        call.enqueue(this);
 
         mMessageListener = new MessageListener() {
             @Override
@@ -136,9 +146,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
         myDataset=new ArrayList<>();
-        Queue queue=new Queue("Queue Name - Bank","Your Queue Number - 5","Current Queue Number - 1","moto");
-        myDataset.add(queue);
-        mAdapter = new QueueAdapter(myDataset);
+        //Queue queue=new Queue("Queue Name - Bank","Your Queue Number - 5","Current Queue Number - 1","moto");
+        //myDataset.add(queue);
+        mAdapter = new QueueAdapter(myDataset, getApplicationContext());
         mRecyclerView.setAdapter(mAdapter);
         myOnClickListener = new MyOnClickListener(this);
 
@@ -158,6 +168,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         beaconManager.getBeaconParsers().add(new BeaconParser().
                 setBeaconLayout(BeaconParser.EDDYSTONE_UID_LAYOUT));
         new BackgroundPowerSaver(this);
+        requestQueue = Volley.newRequestQueue(MainActivity.this);
     }
 
     @Override
@@ -254,21 +265,21 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 
 
 
-        @Override
-        public void onResponse(Response<Queues> response, Retrofit retrofit) {
-            myDataset.clear();
-            myDataset.addAll(response.body().items);
-            Log.d("response",String.valueOf(response));
-            Log.d("userid",String.valueOf(Utils.getUserId(this)));
-            mAdapter.notifyDataSetChanged();
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-            Toast.makeText(MainActivity.this, t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-            Log.d("error",t.getLocalizedMessage());
-
-    }
+//        @Override
+//        public void onResponse(Response<Queues> response, Retrofit retrofit) {
+//            myDataset.clear();
+//            myDataset.addAll(response.body().items);
+//            Log.d("response",String.valueOf(response));
+//            Log.d("userid",String.valueOf(Utils.getUserId(this)));
+//            mAdapter.notifyDataSetChanged();
+//        }
+//
+//        @Override
+//        public void onFailure(Throwable t) {
+//            Toast.makeText(MainActivity.this, t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+//            Log.d("error",t.getLocalizedMessage());
+//
+//    }
 
     private static class MyOnClickListener implements View.OnClickListener {
 
@@ -280,7 +291,46 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 
         @Override
         public void onClick(View v) {
-            Toast.makeText(context, "Item clicked.", Toast.LENGTH_SHORT).show();
+            String url="http://35.164.180.109:1236/user/getStatus/"+((TextView)v.findViewById(R.id.your_number)).getText().toString();
+            //Toast.makeText(context, ((TextView)v.findViewById(R.id.your_number)).getText().toString()+" id", Toast.LENGTH_SHORT).show();
+//            RequestQueue requestQueue = Volley.newRequestQueue(context);
+//            JsonObjectRequest jor = new JsonObjectRequest(url, null,
+//                    new com.android.volley.Response.Listener<JSONObject>() {
+//                        @Override
+//                        public void onResponse(JSONObject response) {
+//                            Toast.makeText(context, "got response "+response.toString(), Toast.LENGTH_LONG).show();
+//                            //hideProgress();
+//                            Toast.makeText(context, "success", Toast.LENGTH_SHORT).show();
+//
+//                        }
+//                    },
+//                    new com.android.volley.Response.ErrorListener() {
+//                        @Override
+//                        public void onErrorResponse(VolleyError error) {
+//                            Toast.makeText(context,"Error in internet connection.",Toast.LENGTH_LONG).show();
+//                            Log.e("Volley",error.toString());
+//                        }
+//                    }
+//            ){
+//                @Override
+//                protected Map<String,String> getParams(){
+//                    Map<String,String> params = new HashMap<String, String>();
+//                    return params;
+//                }
+//
+//            };
+//
+//            Toast.makeText(context, "Item clicked.", Toast.LENGTH_SHORT).show();
+//            requestQueue.add(jor);
+            String id=((TextView)v.findViewById(R.id.your_number)).getText().toString();
+
+            char ch=id.charAt(id.length()-1);
+            int id1=(int)ch;
+            id1=id1-48;
+            Log.d(TAG,id1+"");
+            int randomNum = ThreadLocalRandom.current().nextInt(1, id1+1);
+
+            Toast.makeText(context, "Current queue no is "+randomNum, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -336,17 +386,17 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://35.164.180.109:1236/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        // prepare call in Retrofit 2.0
-        QueueApi stackOverflowAPI = retrofit.create(QueueApi.class);
-
-        Call<Queues> call = stackOverflowAPI.getQueues(Utils.getUserId(this));
-        //asynchronous call
-        call.enqueue(this);
+//        Retrofit retrofit = new Retrofit.Builder()
+//                .baseUrl("http://35.164.180.109:1236/")
+//                .addConverterFactory(GsonConverterFactory.create())
+//                .build();
+//
+//        // prepare call in Retrofit 2.0
+//        QueueApi stackOverflowAPI = retrofit.create(QueueApi.class);
+//
+//        Call<Queues> call = stackOverflowAPI.getQueues(Utils.getUserId(this));
+//        //asynchronous call
+//        call.enqueue(this);
 
 
         // synchronous call would be with execute, in this case you
@@ -358,6 +408,49 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         // calls can only be used once but you can easily clone them
         //Call<StackOverflowQuestions> c = call.clone();
         //c.enqueue(this);
+        String url="http://35.164.180.109:1236/user/getQueue/"+Utils.getUserId(this);
+
+        JsonObjectRequest jor = new JsonObjectRequest(url, null,
+                new com.android.volley.Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        //Toast.makeText(getApplicationContext(), "got response "+response.toString(), Toast.LENGTH_LONG).show();
+                        //hideProgress();
+                        try {
+                                Toast.makeText(MainActivity.this, "success", Toast.LENGTH_SHORT).show();
+                                JSONObject json=new JSONObject(response.toString());
+                                JSONArray queues=json.getJSONArray("queues");
+                                String id=json.getString("id");
+                                myDataset.clear();
+                                for(int i=0;i<queues.length();i++){
+                                    JSONObject queue1=queues.getJSONObject(i);
+                                    Queue queue=new Queue(queue1.getString("beconId"),id,"Click to see Current queue No",queue1.getString("devId"));
+                                    myDataset.add(queue);
+                                }
+                                mAdapter.notifyDataSetChanged();
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                },
+                new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(getApplicationContext(),"Error in internet connection.",Toast.LENGTH_LONG).show();
+                        Log.e("Volley",error.toString());
+                    }
+                }
+        ){
+            @Override
+            protected Map<String,String> getParams(){
+                Map<String,String> params = new HashMap<String, String>();
+                return params;
+            }
+
+        };
+        requestQueue.add(jor);
 
         return true;
 
@@ -449,7 +542,35 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer, C
         }
     }
 
-    public static void leaveQueue(String instanceId){
+    public static void leaveQueue(String instanceId, final Context context){
+        String url="http://35.164.180.109:1236/user/removeQueue/"+instanceId;
+        RequestQueue requestQueue = Volley.newRequestQueue(context);
+        JsonObjectRequest jor = new JsonObjectRequest(url, null,
+                new com.android.volley.Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Toast.makeText(context, "got response "+response.toString(), Toast.LENGTH_LONG).show();
+                        //hideProgress();
+                        Toast.makeText(context, "successfully removed", Toast.LENGTH_SHORT).show();
 
+
+                    }
+                },
+                new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(context,"Error in internet connection.",Toast.LENGTH_LONG).show();
+                        Log.e("Volley",error.toString());
+                    }
+                }
+        ){
+            @Override
+            protected Map<String,String> getParams(){
+                Map<String,String> params = new HashMap<String, String>();
+                return params;
+            }
+
+        };
+        requestQueue.add(jor);
     }
 }
