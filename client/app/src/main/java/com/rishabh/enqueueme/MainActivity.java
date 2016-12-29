@@ -29,6 +29,12 @@ import com.google.android.gms.nearby.messages.Strategy;
 import com.google.android.gms.nearby.messages.SubscribeOptions;
 import com.rishabh.enqueueme.R;
 
+import retrofit.Call;
+import retrofit.Callback;
+import retrofit.GsonConverterFactory;
+import retrofit.Response;
+import retrofit.Retrofit;
+
 import java.util.ArrayList;
 
 import pl.bclogic.pulsator4droid.library.PulsatorLayout;
@@ -36,7 +42,7 @@ import pl.bclogic.pulsator4droid.library.PulsatorLayout;
 import static android.R.attr.data;
 
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,Callback<Queues> {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private GoogleApiClient mGoogleApiClient;
@@ -47,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     static View.OnClickListener myOnClickListener;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+    private ArrayList<Queue> myDataset;
     private PulsatorLayout pulsator;
 
     @Override
@@ -86,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
-        ArrayList<Queue> myDataset=new ArrayList<>();
+        myDataset=new ArrayList<>();
         Queue queue=new Queue("Queue Name - Bank","Your Queue Number - 5","Current Queue Number - 1","moto");
         myDataset.add(queue);
         mAdapter = new QueueAdapter(myDataset);
@@ -130,17 +137,31 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        setProgressBarIndeterminateVisibility(true);
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://35.164.180.109:1236/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+        // prepare call in Retrofit 2.0
+        QueueApi stackOverflowAPI = retrofit.create(QueueApi.class);
 
-        return super.onOptionsItemSelected(item);
+        Call<Queues> call = stackOverflowAPI.getQueues(Utils.getUserId(this));
+        //asynchronous call
+        call.enqueue(this);
+
+
+        // synchronous call would be with execute, in this case you
+        // would have to perform this outside the main thread
+        // call.execute()
+
+        // to cancel a running request
+        // call.cancel();
+        // calls can only be used once but you can easily clone them
+        //Call<StackOverflowQuestions> c = call.clone();
+        //c.enqueue(this);
+
+        return true;
     }
 
     @Override
@@ -241,5 +262,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
+    }
+
+    @Override
+    public void onResponse(Response<Queues> response, Retrofit retrofit) {
+        setProgressBarIndeterminateVisibility(false);
+//        myDataset.clear();
+//        myDataset.addAll(response.body().items);
+        Log.d("response",String.valueOf(response));
+        Log.d("userid",String.valueOf(Utils.getUserId(this)));
+        mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onFailure(Throwable t) {
+        Toast.makeText(MainActivity.this, t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+        Log.d("error",t.getLocalizedMessage());
     }
 }
